@@ -1064,6 +1064,11 @@ async function accountLogin(state, prefix, admin = [], email, password) {
         main();
 
         process.on("unhandledRejection", (reason, promise) => {
+            const reasonStr = reason instanceof Error ? reason.message : String(reason);
+            if (reasonStr.includes("Connection closed") || reasonStr.includes("Keepalive timeout") || reasonStr.includes("changeNicknameMqtt")) {
+                logger.yellow(`[FCA-WARNING] Non-fatal network status: ${reasonStr}`);
+                return;
+            }
             if (reason instanceof Error) {
                 logger.red("Reason:", reason.message);
                 logger.red("Stack Trace:" + reason.stack);

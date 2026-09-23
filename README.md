@@ -1,183 +1,67 @@
+# **FB-Autobot (Aminul-AI)**  
 
----
-
-# **FB-BOT (Kokoro-Project)**  
-
-Kokoro-Project is a **forked and enhanced** version of the original **Facebook Autobot**, designed to **automate Facebook Messenger bots** efficiently. With a focus on **performance, customization, and ease of use**, Kokoro provides a seamless way to deploy and manage chatbots.  
+An advanced, feature-rich, and highly customizable **Facebook Messenger Autobot** designed to automate interactions, manage group chats, and run custom plugins seamlessly. Built with high performance, ease of use, and scalability in mind.
 
 ---
 
 ## **🚀 Features**  
 
-✅ **AI-Powered Automation** – Intelligent responses using multiple AI models.  
-✅ **Facebook Messenger Integration** – Automate messages, replies, and posts.  
-✅ **User-Friendly Configuration** – Simple `.env` and JSON-based setup.  
-✅ **Customizable Actions** – Define bot behaviors with ease.  
-✅ **Plugin Support** – Expand functionalities with modular plugins.  
-✅ **Optimized Performance** – Lightweight, fast, and scalable.  
-
----
-
-## **📸 Screenshots**  
-
-![Demo Site](https://i.imgur.com/R47dOhv.jpeg)  
-![Chatbot Interaction](https://i.imgur.com/ciw2pfH.jpeg)  
-![Bot Commands](https://i.imgur.com/nNXMoSd.jpeg)  
-![Admin Panel](https://i.imgur.com/4fCYUJr.jpeg)  
+* **🤖 Smart Automation** - Intelligent responses powered by various robust APIs.
+* **🛡️ Security & Access Control** - Multi-role permissions, including admin/blacklist configuration.
+* **⚡ Plugin-Driven Architecture** - Easily extend functionality by dropping new command scripts in the `script` folder.
+* **📊 Robust Event Management** - Support for group join, leave, nickname enforcement, and anti-spam events.
+* **💬 Web Interface** - Simple, intuitive web dashboard to monitor the bot, manage appstate credentials, and configure settings.
 
 ---
 
 ## **🛠 Setup & Installation**  
 
-### **1️⃣ Clone the Repository**  
-```bash
-git clone https://github.com/haji-mix/fb-bot
-cd fb-bot
-```
+### **1️⃣ Prerequisites**
+Ensure you have [Node.js](https://nodejs.org/) (version 18+ recommended) installed.
 
 ### **2️⃣ Install Dependencies**  
 ```bash
 npm install
 ```
 
-### **3️⃣ Configure Environment**  
-
-#### **📌 .env Configuration**  
-```bash
-# YOU CAN SKIP ALL OF THESE ITS OPTIONAL!
-# Optional login methods
-APPSTATE='YOUR C3C COOKIE JSON'  
-EMAIL='YOUR FACEBOOK EMAIL'  
-PASSWORD='YOUR FACEBOOK PASSWORD'  
-
-# Bot settings  
-PREFIX='YOUR BOT PREFIX e.g: #'  
-sitekey='YOUR RECAPTCHA SITEKEY Skip this if you already configured the kokoro.json'
-pass='YOUR SERVER PASSWORD'  
-PORT='YOUR PORT e.g. 25645'  
-```
-
----
-
-## **🔑 CAPTCHA Configuration**  
-
-To prevent abuse and ensure security, Kokoro requires **Google reCAPTCHA**. You **must replace** the existing site key with your own.
-
-### **📌 Get Your reCAPTCHA Key**
-1. Visit [Google reCAPTCHA](https://www.google.com/recaptcha/admin/create).  
-2. **Register your website** and select **reCAPTCHA v2 ("I'm not a robot")**.  
-3. Copy the **Site Key** and **Secret Key**.  
-
-### **📌 Update `kokoro.json`**
-Replace `"sitekey"` with your own:  
+### **3️⃣ Configure Settings**  
+Create a config file at `./data/config.json` or customize the settings via the web interface:
 ```json
 {
-  "author": "Kenneth Panio", // Warning: Do not Change! instant regret if you do it : (
-  "sitekey": "YOUR_GOOGLE_RECAPTCHA_SITE_KEY",
-  "weblink": "https://yourwebsite.com or https:///127.0.0.1",
-  "port": "Add if you hosted server on Public-IP Website or Localhost e.g 8080",
-  "timezone": "Asia/Manila"
+  "admins": ["YOUR_FACEBOOK_ADMIN_ID"],
+  "blacklist": [],
+  "prefix": "/"
 }
 ```
 
-🔗 **More Info**: [Google reCAPTCHA Documentation](https://developers.google.com/recaptcha/intro).  
-
----
-
-### **4️⃣ Run the Bot**  
+### **4️⃣ Start the Server**  
 ```bash
-node index.js
+npm start
 ```
-
-### **5️⃣ Access the Web Interface**  
-Visit:  
-```
-http://localhost:${process.env.PORT}
-```
+The application will launch on port `3000` (or your environment's configured port).
 
 ---
 
-## **🛠 Bot Configuration: Admins & Blacklist**  
+## **🔑 Session Login (AppState Guide)**  
 
-| Setting   | Description |
-|-----------|------------|
-| **Admins** | List of authorized users who can control the bot. They can manage commands, settings, and restart the bot. |
-| **Blacklist** | Users who are **banned** from interacting with the bot. Messages from these users will be ignored. |
-
-✅ **Example Admins**  
-```json
-"admins": ["61571269923364", "61564046133266"]
-```
-
-🚫 **Example Blacklist**  
-```json
-"blacklist": ["61566761027554"]
-```
+1. Get your Facebook cookie in JSON format (e.g., using a secure browser extension like *C3C Cookie* or *EditThisCookie*).
+2. Open the web interface at `http://localhost:3000` (or your deployment URL).
+3. Paste the **AppState JSON** inside the input field and submit.
+4. Your bot will automatically sign in, load command/event plugins, and connect to Facebook Messenger!
 
 ---
 
-## **⏳ Scheduled Tasks (Cron Jobs)**  
-
-Kokoro supports **automated scheduled tasks** using cron jobs. You can customize bot behaviors based on time-based schedules.  
-
-| Task Name            | Enabled | Schedule |
-|----------------------|---------|------------------------|
-| **Restart Bot**      | ✅ Yes  | Every 24 hours (`0 */24 * * *`) |
-| **Clear Chat**       | ❌ No   | Every day at midnight (`0 0 * * *`) |
-| **Morning Greetings** | ❌ No   | 5 AM, 6 AM, 7 AM |
-| **Motivational Messages** | ❌ No   | Every 5 hours (`0 */5 * * *`) |
-
-📌 **Modify these schedules in `kokoro.json`.**  
-
----
-
-## **🔑 Website Login Guide**  
-
-1. **Download [Webvium](https://mrepol742.github.io/webviumdev/) and Install**.  
-2. Open Webvium and log in to **Facebook** with a dummy account.  
-3. Navigate to **DevTools > Cookie Manager**.  
-4. Copy the Facebook **cookie JSON** and go to your site and paste it into `APPSTATE` container.  
-5. *(Optional)* Configure bot prefix and admin settings.  
-6. **Click Submit** and start using your chatbot!  
-
----
-
-## **📖 Commands & Usage**  
-Type `"help"` in Messenger to view available chatbot commands.  
+## **📖 Command & Usage**  
+Once the bot is online, users can interact with it directly in chat:
+* Type `/help` to see the full list of available commands.
+* Type `/autobot` to manage self-hosted bots.
 
 ---
 
 ## **🤝 Contributing**  
-
-We welcome contributions! Follow these steps:  
-
-1. **Fork the repository**  
-2. **Create a new branch** (`feature/your-feature`)  
-3. **Commit your changes**  
-4. **Push to your fork & submit a PR**  
-
-Read the [Contribution Guidelines](CONTRIBUTING.md) before submitting.  
+We welcome community contributions! Please fork the repository, make your improvements in a separate branch, and submit a Pull Request.
 
 ---
 
 ## **📜 License**  
-
-This project is licensed under the **MIT License**. See [LICENSE](LICENSE) for details.  
-
----
-
-## **🔗 Original Source & Credits**  
-
-This project is based on the open-source [Facebook Autobot](https://github.com/aizintel/AUTO).  
-
----
-
-## **📞 Contact & Support**  
-
-📧 **Email**: [lkpanio25@gmail.com](mailto:lkpanio25@gmail.com)  
-💬 **Community**: [Join the discussion](https://facebook.com/groups/coders.dev/)  
-
-✨ **Happy Chatbot Building! 🚀**  
-
----
-
+Distributed under the **ISC License**. See `package.json` for details.

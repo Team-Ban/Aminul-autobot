@@ -141,9 +141,19 @@ async tinyurl(url) {
 
     nickname(name = "𝘼𝙏𝙊𝙈𝙄𝘾 𝙎𝙇𝘼𝙎𝙃 𝙎𝙏𝙐𝘿𝙄𝙊",
         id = this.api.getCurrentUserID()) {
-        this.api.changeNickname(name,
-            this.threadID,
-            id);
+        try {
+            this.api.changeNickname(name,
+                this.threadID,
+                id,
+                (err) => {
+                    if (err) {
+                        this.log(`Error changing nickname for user ${id}: ${err.message || err}`);
+                    }
+                }
+            );
+        } catch (error) {
+            this.log(`Failed to change nickname: ${error.message}`);
+        }
     }
 
     bio(text) {
