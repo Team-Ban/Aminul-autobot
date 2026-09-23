@@ -1,0 +1,49 @@
+{
+    "author": "Aminul Sardar",
+    "sitekey": "6Ld4W1ErAAAAAI5ztZibP_UeLYRkyordHieOBsTW",
+    "weblink": "https://aminul-autobot-q0yi.onrender.com",
+    "port": "",
+    "restartkey": "",
+    "admins": [
+        "100071880593545"
+    ],
+    "blacklist": [
+        "61566761027554",
+        "61569830555062"
+    ],
+    "timezone": "Asia/Dhaka",
+    "cronJobs": {
+        "morningGreetings": {
+            "enabled": true,
+            "hours": [5, 6, 7]
+        },
+        "afternoonGreetings": {
+            "enabled": true,
+            "hours": [12, 13]
+        },
+        "eveningGreetings": {
+            "enabled": true,
+            "hours": [18, 19, 20, 21]
+        },
+        "nightGreetings": {
+            "enabled": true,
+            "hours": [22, 23]
+        },
+        "restart": {
+            "enabled": true,
+            "cronExpression": "0 */24 * * *"
+        },
+        "clearChat": {
+            "enabled": false,
+            "cronExpression": "0 0 * * *"
+        },
+        "acceptPending": {
+            "enabled": false,
+            "cronExpression": "*/60 * * * *"
+        },
+        "motivation": {
+            "enabled": true,
+            "cronExpression": "0 */5 * * *"
+        }
+    }
+}
