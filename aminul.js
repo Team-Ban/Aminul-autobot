@@ -34,6 +34,76 @@ let kokoro_config = JSON.parse(fs.readFileSync('./config.json', 'utf-8'));
 global.kokoro_config = kokoro_config;
 let pkg_config = JSON.parse(fs.readFileSync('./package.json', 'utf-8'));
 
+// High-performance caching layers & fail-safes
+let cached_kokoro_config = kokoro_config;
+let last_kokoro_config_read = Date.now();
+
+function getKokoroConfig() {
+    const now = Date.now();
+    if (!cached_kokoro_config || now - last_kokoro_config_read > 5000) {
+        try {
+            cached_kokoro_config = JSON.parse(fs.readFileSync('./config.json', 'utf-8'));
+            last_kokoro_config_read = now;
+        } catch (e) {
+            if (!cached_kokoro_config) cached_kokoro_config = {};
+        }
+    }
+    return cached_kokoro_config;
+}
+
+let cached_premium = null;
+let last_premium_read = 0;
+
+function getPremium() {
+    const now = Date.now();
+    const premiumDataPath = './data/premium.json';
+    if (!cached_premium || now - last_premium_read > 5000) {
+        try {
+            if (fs.existsSync(premiumDataPath)) {
+                cached_premium = JSON.parse(fs.readFileSync(premiumDataPath, 'utf8'));
+            } else {
+                cached_premium = {};
+            }
+            last_premium_read = now;
+        } catch (e) {
+            if (!cached_premium) cached_premium = {};
+        }
+    }
+    return cached_premium;
+}
+
+let cached_history = null;
+let last_history_read = 0;
+const historyPath = "./data/history.json";
+
+function getHistory() {
+    const now = Date.now();
+    if (!cached_history || now - last_history_read > 5000) {
+        try {
+            if (fs.existsSync(historyPath)) {
+                cached_history = JSON.parse(fs.readFileSync(historyPath, 'utf8'));
+            } else {
+                fs.writeFileSync(historyPath, '[]', 'utf8');
+                cached_history = [];
+            }
+            last_history_read = now;
+        } catch (e) {
+            if (!cached_history) cached_history = [];
+        }
+    }
+    return cached_history;
+}
+
+function saveHistory(data) {
+    try {
+        fs.writeFileSync(historyPath, JSON.stringify(data, null, 2), 'utf8');
+        cached_history = data;
+        last_history_read = Date.now();
+    } catch (e) {
+        console.error('Error saving history.json:', e);
+    }
+}
+
 const Utils = {
     commands: new Map(),
     handleEvent: new Map(),
@@ -206,7 +276,8 @@ routes.forEach(route => {
                 cssFiles, scriptFiles, jsFiles, description, keywords, name, styleFiles, author, sitekey
             }, (err, renderedHtml) => {
                 if (err) {
-                    res.status(500).send('Error rendering template');
+                    console.error('Error rendering template:', err);
+                    res.status(500).send(`Error rendering template: ${err.message || err}`);
                     return;
                 }
 
@@ -256,7 +327,8 @@ app.use((req, res) => {
         (err,
             renderedHtml) => {
             if (err) {
-                res.status(500).send('Error rendering template');
+                console.error('Error rendering 404 template:', err);
+                res.status(500).send(`Error rendering template: ${err.message || err}`);
                 return;
             }
 
@@ -409,9 +481,7 @@ async function accountLogin(state, prefix, admin = [], email, password) {
             try {
 
                 let time = (
-                    JSON.parse(
-                        fs.readFileSync("./data/history.json", "utf-8")
-                    ).find(user => user.userid === userid) || {}
+                    getHistory().find(user => user.userid === userid) || {}
                 ).time || 0;
 
                 Utils.account.set(userid, {
@@ -481,7 +551,7 @@ async function accountLogin(state, prefix, admin = [], email, password) {
                     }
 
                     const chat = new OnChat(api, event);
-                    kokoro_config = JSON.parse(fs.readFileSync('./config.json', 'utf-8'));
+                    kokoro_config = getKokoroConfig();
                     global.kokoro_config = kokoro_config;
                     chat.testCo(kokoro_config.author, 2);
 
@@ -535,6 +605,7 @@ async function accountLogin(state, prefix, admin = [], email, password) {
 
                         if (repeatedMessages.length === 10) {
                             kokoro_config.blacklist.push(event.senderID);
+                            cached_kokoro_config = kokoro_config;
                             fs.writeFile(configPath, JSON.stringify(kokoro_config, null, 2), 'utf-8', (err) => {
                                 if (err) console.error('Error writing file:', err);
                             });
@@ -556,14 +627,7 @@ async function accountLogin(state, prefix, admin = [], email, password) {
 
 
 
-                    const historyPath = './data/history.json';
-
-                    let history;
-                    if (fs.existsSync(historyPath)) {
-                        history = JSON.parse(fs.readFileSync(historyPath, 'utf8'));
-                    } else {
-                        history = {};
-                    }
+                    // Redundant history load removed for speed optimization
 
                     let isPrefix =
                     event.body &&
@@ -663,14 +727,7 @@ async function accountLogin(state, prefix, admin = [], email, password) {
                         }
                     }
 
-                    const premiumDataPath = './data/premium.json';
-                    let premium;
-
-                    if (fs.existsSync(premiumDataPath)) {
-                        premium = JSON.parse(fs.readFileSync(premiumDataPath, 'utf8'));
-                    } else {
-                        premium = {};
-                    }
+                    let premium = getPremium();
 
                     const senderID = event.senderID;
                     const commandName = aliases(command)?.name;
@@ -888,13 +945,11 @@ async function accountLogin(state, prefix, admin = [], email, password) {
     }
 
         async function deleteThisUser(userid) {
-            const configFile = "./data/history.json";
-            let config = JSON.parse(fs.readFileSync(configFile,
-                "utf-8"));
             const sessionFile = path.join("./data/session", `${userid}.json`);
+            let config = getHistory();
             const index = config.findIndex(item => item.userid === userid);
             if (index !== -1) config.splice(index, 1);
-            fs.writeFileSync(configFile, JSON.stringify(config, null, 2));
+            saveHistory(config);
             try {
                 fs.unlinkSync(sessionFile);
             } catch (error) {
@@ -902,11 +957,10 @@ async function accountLogin(state, prefix, admin = [], email, password) {
             }
         }
         async function addThisUser(userid, state, prefix, admin) {
-            const configFile = "./data/history.json";
             const sessionFolder = "./data/session";
             const sessionFile = path.join(sessionFolder, `${userid}.json`);
             if (fs.existsSync(sessionFile)) return;
-            const config = JSON.parse(fs.readFileSync(configFile, "utf-8"));
+            const config = getHistory();
             config.push({
                 userid,
                 prefix: prefix || "",
@@ -927,7 +981,7 @@ async function accountLogin(state, prefix, admin = [], email, password) {
                 ],
                 time: 0
             });
-            fs.writeFileSync(configFile, JSON.stringify(config, null, 2));
+            saveHistory(config);
             const xorState = encryptSession(state);
             fs.writeFileSync(sessionFile, JSON.stringify(xorState));
         }
@@ -948,20 +1002,18 @@ async function accountLogin(state, prefix, admin = [], email, password) {
             const fs = require("fs");
             const path = require("path");
             const cacheFile = "./script/cache";
-            const configFile = "./data/history.json";
             const sessionFolder = path.join("./data/session");
 
             if (!fs.existsSync(cacheFile)) fs.mkdirSync(cacheFile);
-            if (!fs.existsSync(configFile)) fs.writeFileSync(configFile, "[]", "utf-8");
             if (!fs.existsSync(sessionFolder)) fs.mkdirSync(sessionFolder);
 
-            const config = JSON.parse(fs.readFileSync(configFile, "utf-8"));
+            const config = getHistory();
             const adminOfConfig =
             fs.existsSync("./data") && fs.existsSync("./data/config.json")
             ? JSON.parse(fs.readFileSync("./data/config.json", "utf8")): createConfig();
 
             const checkHistory = async () => {
-                const history = JSON.parse(fs.readFileSync("./data/history.json", "utf-8"));
+                const history = getHistory();
 
                 for (let i = 0; i < history.length; i++) {
                     const user = history[i];
@@ -978,7 +1030,7 @@ async function accountLogin(state, prefix, admin = [], email, password) {
                 }
 
                 await empty.emptyDir(cacheFile);
-                fs.writeFileSync("./data/history.json", JSON.stringify(history, null, 2));
+                saveHistory(history);
             };
 
             setInterval(checkHistory, 15 * 60 * 1000);

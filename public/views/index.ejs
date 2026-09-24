@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="keywords" content="<%= keywords.join(', ') %>">
-    <meta name="description" content="<%= description %>">
-    <meta name="author" content="<%= author.join(', ') %>">
+    <meta name="keywords" content="<%= (typeof keywords !== 'undefined' && Array.isArray(keywords)) ? keywords.join(', ') : '' %>">
+    <meta name="description" content="<%= typeof description !== 'undefined' ? description : '' %>">
+    <meta name="author" content="<%= (typeof author !== 'undefined' && Array.isArray(author)) ? author.join(', ') : '' %>">
     <meta property="og:site_name" content="<%= name %>">
     <meta property="og:title" content="<%= name %>">
     <meta property="og:description" content="<%= description %>">

@@ -7,14 +7,6 @@ const unlinkAsync = util.promisify(fs.unlink);
 
 const historyFilePath = path.resolve(__dirname, '..', 'data', 'history.json');
 
-let historyData = [];
-
-try {
-  historyData = require(historyFilePath);
-} catch (readError) {
-  console.error('Error reading history.json:', readError);
-}
-
 module.exports["config"] = {
   name: 'session',
   aliases: ["active-session","activelist"],
@@ -32,7 +24,16 @@ module.exports["run"] = async function ({ chat, fonts, api, event, args }) {
   const tin = txt => fonts.thin(txt);
   const { threadID, messageID } = event;
 
- if (args[0] && args[0].toLowerCase() === 'logout') {
+  let historyData = [];
+  try {
+    if (fs.existsSync(historyFilePath)) {
+      historyData = JSON.parse(fs.readFileSync(historyFilePath, 'utf8'));
+    }
+  } catch (readError) {
+    console.error('Error reading history.json:', readError);
+  }
+
+  if (args[0] && args[0].toLowerCase() === 'logout') {
     await logout(api, event);
     await api.logout();
     return;

@@ -2,20 +2,22 @@ const tracks = [
     './assets/audio/washingh.mp3',
     './assets/audio/suzume.mp3',
     './assets/audio/bye.mp3',
-    './assets/audio/PureImaginationLofi.mp3',
-    'https://sf16-ies-music-va.tiktokcdn.com/obj/musically-maliva-obj/7309353473656769286.mp3',
-    'https://sf16-ies-music-va.tiktokcdn.com/obj/musically-maliva-obj/7374389952207522566.mp3'
+    './assets/audio/PureImaginationLofi.mp3'
 ];
 
 // Function to play random music
 function playRandomMusic() {
     const randomTrack = tracks[Math.floor(Math.random() * tracks.length)];
     const audioPlayer = $('#audio-player').get(0); // Get the DOM element from jQuery object
+    if (!audioPlayer) return;
+
     if (audioPlayer.src !== randomTrack) {
         audioPlayer.src = randomTrack;
     }
     if (audioPlayer.paused) {
-        audioPlayer.play();
+        audioPlayer.play().catch(error => {
+            console.warn("Audio play interrupted or prevented by browser autoplay policy:", error);
+        });
     }
 }
 
@@ -24,6 +26,20 @@ $(document).ready(function () {
     const $popupMessage = $('#popup-message');
     const $okButton = $('#ok-button');
     const $audioPlayer = $('#audio-player');
+    const audioDOM = $audioPlayer.get(0);
+
+    if (audioDOM) {
+        // Handle audio loading/source errors gracefully without crashing or throwing NotSupportedError
+        audioDOM.addEventListener('error', function (e) {
+            console.warn("Audio track failed to load, selecting a fallback track...", e);
+            // Fallback to a guaranteed local track
+            const fallbackTrack = './assets/audio/PureImaginationLofi.mp3';
+            if (audioDOM.src !== fallbackTrack) {
+                audioDOM.src = fallbackTrack;
+                audioDOM.play().catch(err => console.warn("Fallback playback failed:", err));
+            }
+        }, true);
+    }
 
     // Display the message (use flex to center and show the popup)
     $popupMessage.css('display', 'flex');
@@ -34,14 +50,14 @@ $(document).ready(function () {
         $popupMessage.hide();
 
         // Play a random song if no music is already playing
-        if ($audioPlayer.get(0).paused) {
+        if (audioDOM && audioDOM.paused) {
             playRandomMusic();
         }
     });
 
     // Ensure that the audio continues playing without interruption when clicking on any element
     $(document).on('click', function (event) {
-        if ($audioPlayer.get(0).paused) {
+        if (audioDOM && audioDOM.paused) {
             playRandomMusic();
         }
     });
